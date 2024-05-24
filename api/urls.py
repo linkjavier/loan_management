@@ -9,4 +9,8 @@ router.register(r'payments', PaymentViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    # path('customers/<int:pk>/balance/', CustomerViewSet.as_view({'get': 'balance'}), name='customer-balance'),
 ]
+
+# Esto asegura que el decorador `@action` se registra con un nombre correcto.
+CustomerViewSet.balance.url_name = 'customer-balance'

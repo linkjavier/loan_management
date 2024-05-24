@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.urls import reverse
 from .models import Customer, Loan, Payment
 
 class CustomerTestCase(TestCase):
@@ -14,7 +15,8 @@ class CustomerTestCase(TestCase):
 
         Se ejecuta antes de cada prueba, creando una instancia de Customer para su uso en las pruebas.
         """
-        Customer.objects.create(external_id="customer_01", score=1000.0, status=1)
+        self.customer = Customer.objects.create(external_id="customer_01", score=4000.0, status=1)
+        Loan.objects.create(external_id="loan_01", customer=self.customer, amount=3500.0, outstanding=3500.0, status=2)
 
     def test_customer_creation(self):
         """
@@ -23,8 +25,18 @@ class CustomerTestCase(TestCase):
         Verifica que el Customer creado en setUp tiene los atributos correctos.
         """
         customer = Customer.objects.get(external_id="customer_01")
-        self.assertEqual(customer.score, 1000.0)
+        self.assertEqual(customer.score, 4000.0)
         self.assertEqual(customer.status, 1)
+
+    def test_customer_balance(self):
+        customer = Customer.objects.get(external_id="customer_01")
+        url = reverse('customer-balance', kwargs={'pk': customer.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['external_id'], "customer_01")
+        self.assertEqual(response.data['score'], '4000.00')
+        self.assertEqual(response.data['total_debt'], 3500.0)
+        self.assertEqual(response.data['available_amount'], 500.0)
 
 class LoanTestCase(TestCase):
     """

@@ -64,3 +64,20 @@ class PaymentLoanDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = PaymentLoanDetail
         fields = '__all__'
+
+class CustomerBalanceSerializer(serializers.ModelSerializer):
+    available_amount = serializers.SerializerMethodField()
+    total_debt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Customer
+        fields = ['external_id', 'score', 'available_amount', 'total_debt']
+
+    def get_available_amount(self, obj):
+        total_debt = self.get_total_debt(obj)
+        return obj.score - total_debt
+
+    def get_total_debt(self, obj):
+        loans = Loan.objects.filter(customer=obj, status__in=[1, 2])  # Pending or Active
+        return sum([loan.outstanding for loan in loans])
+
